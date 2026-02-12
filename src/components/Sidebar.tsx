@@ -1,3 +1,5 @@
+import * as React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import SidebarContent from "./SidebarContent";
 import type { PageKey } from "../types/nav";
 import type { Theme } from "../lib/theme";
@@ -8,7 +10,6 @@ type Props = {
   theme: Theme;
   setTheme: (t: Theme) => void;
 
-  // new
   collapsed: boolean;
   onToggleCollapsed: () => void;
 };
@@ -21,12 +22,21 @@ export default function Sidebar({
   collapsed,
   onToggleCollapsed,
 }: Props) {
+  const reduce = useReducedMotion();
+
   return (
-    <aside
-      className={[
-        "min-h-screen h-dvh self-stretch border-r border-border bg-cream",
-        collapsed ? "w-[4.25rem]" : "w-fit min-w-[12rem]",
-      ].join(" ")}
+    <motion.aside
+      // Let motion control width; keep the rest in Tailwind
+      className="h-full border-r border-border bg-cream overflow-hidden"
+      animate={{
+        width: collapsed ? "4.25rem" : "12.5rem",
+      }}
+      transition={
+        reduce
+          ? { duration: 0 }
+          : { type: "spring", stiffness: 520, damping: 40 }
+      }
+      aria-label="Sidebar"
     >
       <SidebarContent
         active={active}
@@ -36,6 +46,6 @@ export default function Sidebar({
         collapsed={collapsed}
         onToggleCollapsed={onToggleCollapsed}
       />
-    </aside>
+    </motion.aside>
   );
 }

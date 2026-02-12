@@ -10,6 +10,7 @@ export default {
         "cream-fg": "hsl(var(--cream-fg))",
         border: "hsl(var(--border))",
         muted: "hsl(var(--muted))",
+        accent: "hsl(var(--accent))",
       },
       fontFamily: {
         heading: ['"Playfair Display"', "serif"],

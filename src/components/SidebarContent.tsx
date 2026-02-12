@@ -1,4 +1,6 @@
-import { Briefcase, Home, Mail, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import * as React from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Briefcase, Home, Mail, PanelLeftClose, PanelLeftOpen, ScrollText } from "lucide-react";
 import type { NavItem, PageKey } from "../types/nav";
 import ThemeSwitch from "./ThemeSwitch";
 import type { Theme } from "../lib/theme";
@@ -6,6 +8,7 @@ import type { Theme } from "../lib/theme";
 const NAV: NavItem[] = [
   { key: "home", label: "Home", icon: Home },
   { key: "work", label: "Work", icon: Briefcase },
+  { key: "experience", label: "Experience", icon: ScrollText },
   { key: "contact", label: "Contact", icon: Mail },
 ];
 
@@ -15,14 +18,29 @@ type Props = {
   theme: Theme;
   setTheme: (t: Theme) => void;
   onNavigate?: () => void;
-
-  // new
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
-
-  // If this content is rendered inside the mobile drawer
   inDrawer?: boolean;
 };
+
+function CollapsedTooltip({ label }: { label: string }) {
+  const reduce = useReducedMotion();
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={reduce ? { opacity: 1 } : { opacity: 0, x: -6, scale: 0.98 }}
+        animate={reduce ? { opacity: 1 } : { opacity: 1, x: 0, scale: 1 }}
+        exit={reduce ? { opacity: 1 } : { opacity: 0, x: -6, scale: 0.98 }}
+        transition={{ duration: 0.14, ease: "easeOut" }}
+        className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-border bg-cream px-2 py-1 text-xs font-semibold shadow-sm"
+        role="tooltip"
+      >
+        {label}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 export default function SidebarContent({
   active,
@@ -35,6 +53,11 @@ export default function SidebarContent({
   inDrawer = false,
 }: Props) {
   const showCollapseButton = !inDrawer && typeof onToggleCollapsed === "function";
+  const reduce = useReducedMotion();
+  const [hoveredKey, setHoveredKey] = React.useState<PageKey | null>(null);
+
+  // Match your sidebar width spring: label should appear after width mostly opens
+  const LABEL_DELAY = 0.14;
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
@@ -50,9 +73,12 @@ export default function SidebarContent({
             onClick={onToggleCollapsed}
             className="inline-flex items-center justify-center rounded-md border border-border p-2 hover:bg-muted"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand" : "Collapse"}
           >
-            {collapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
+            {collapsed ? (
+              <PanelLeftOpen size={18} aria-hidden="true" />
+            ) : (
+              <PanelLeftClose size={18} aria-hidden="true" />
+            )}
           </button>
         )}
       </header>
@@ -61,38 +87,95 @@ export default function SidebarContent({
         <ul className="flex flex-col gap-1">
           {NAV.map(({ key, label, icon: Icon }) => {
             const isActive = active === key;
+            const showTooltip = collapsed && hoveredKey === key;
 
             return (
-              <li key={key}>
+              <li key={key} className="relative">
                 <button
                   type="button"
                   onClick={() => {
                     setActive(key);
                     onNavigate?.();
                   }}
+                  onMouseEnter={() => setHoveredKey(key)}
+                  onMouseLeave={() => setHoveredKey(null)}
+                  onFocus={() => setHoveredKey(key)}
+                  onBlur={() => setHoveredKey(null)}
                   className={[
-                    "group relative w-full rounded-md px-3 py-2 text-sm",
-                    "flex items-center gap-2 transition-colors",
+                    "group relative w-full min-h-10 rounded-md px-3 py-2 text-sm",
+                    "flex items-center gap-2 overflow-hidden transition-colors",
                     "hover:bg-muted focus-visible:bg-muted",
-                    isActive ? "font-semibold" : "opacity-90",
                     collapsed ? "justify-center px-2" : "",
+                    !collapsed && isActive ? "font-semibold" : "opacity-90",
                   ].join(" ")}
                   aria-current={isActive ? "page" : undefined}
                   aria-label={collapsed ? label : undefined}
-                  title={collapsed ? label : undefined}
                 >
-                  {/* Active rail */}
-                  <span
-                    className={[
-                      "absolute left-1 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full",
-                      isActive ? "bg-cream-fg" : "bg-transparent",
-                      collapsed ? "left-0.5" : "left-1",
-                    ].join(" ")}
-                    aria-hidden="true"
-                  />
+                  {/* Active rail (expanded only) */}
+                  {!collapsed && (
+                    <>
+                      <span
+                        className="absolute inset-y-2 left-0 w-[2px] rounded-full bg-transparent group-hover:bg-border"
+                        aria-hidden="true"
+                      />
 
-                  <Icon size={16} aria-hidden="true" />
-                  {!collapsed && <span>{label}</span>}
+                      {isActive && (
+                        <motion.span
+                          layoutId="sidebar-active-rail"
+                          className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-accent"
+                          transition={{ type: "spring", stiffness: 520, damping: 34 }}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </>
+                  )}
+
+                  {/* Icon (collapsed: active icon is accent + subtle spring pop) */}
+                  <motion.span
+                    className="inline-flex items-center justify-center"
+                    animate={reduce ? undefined : collapsed && isActive ? { scale: 1.08 } : { scale: 1 }}
+                    transition={{ type: "spring", stiffness: 520, damping: 26 }}
+                  >
+                    <Icon
+                      size={16}
+                      aria-hidden="true"
+                      className={[
+                        "transition-colors duration-200",
+                        collapsed
+                          ? isActive
+                            ? "text-accent"
+                            : "opacity-80 group-hover:opacity-100"
+                          : "opacity-90",
+                      ].join(" ")}
+                    />
+                  </motion.span>
+
+                  {/* Label (Option A): delayed fade + horizontal reveal (clipPath) */}
+                  {!collapsed && (
+                    <motion.span
+                      className="whitespace-nowrap overflow-hidden"
+                      initial={false}
+                      animate={
+                        reduce
+                          ? { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", x: 0 }
+                          : collapsed
+                          ? { opacity: 0, clipPath: "inset(0% 100% 0% 0%)", x: -4 }
+                          : { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", x: 0 }
+                      }
+                      transition={
+                        reduce
+                          ? { duration: 0 }
+                          : collapsed
+                          ? { duration: 0.08, ease: "easeOut" }
+                          : { delay: LABEL_DELAY, duration: 0.18, ease: "easeOut" }
+                      }
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+
+                  {/* Tooltip (collapsed only) */}
+                  {showTooltip && <CollapsedTooltip label={label} />}
                 </button>
               </li>
             );
@@ -100,7 +183,6 @@ export default function SidebarContent({
         </ul>
       </nav>
 
-      {/* Theme toggle stays at bottom; when collapsed we still show switch */}
       <div className="mt-auto pt-2">
         <ThemeSwitch theme={theme} setTheme={setTheme} />
       </div>

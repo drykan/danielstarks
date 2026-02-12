@@ -87,7 +87,9 @@ export default function HomeBlurb() {
           best furbabies we could ask for. Outside of work, I enjoy hiking,
           camping, and backpacking, getting out on the golf course, PC gaming
           (definitely not a console person), and spending time 3D printing or
-          woodworking. Always happy to connect and chat.
+          woodworking. 
+          <br /> 
+          Always happy to connect and chat.
         </p>
       </div>
     </div>

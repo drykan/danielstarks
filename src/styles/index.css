@@ -9,6 +9,7 @@
     --cream-fg: 220 8% 18%;      /* text */
     --border: 220 10% 85%;
     --muted: 220 10% 92%;
+    --accent: 24 95% 55%;        /* orange */
   }
 
   .dark {
@@ -17,7 +18,10 @@
     --cream-fg: 40 33% 95%;
     --border: 220 10% 30%;
     --muted: 220 10% 25%;
+    --accent: 24 95% 60%;         /* orange */
   }
+
+
 
   html, body { height: 100%; }
   body {
