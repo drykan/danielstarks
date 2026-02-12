@@ -1,6 +1,6 @@
 import * as React from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Briefcase, Home, Mail, PanelLeftClose, PanelLeftOpen, ScrollText } from "lucide-react";
+import { Briefcase, Home, Mail, ScrollText } from "lucide-react";
 import type { NavItem, PageKey } from "../types/nav";
 import ThemeSwitch from "./ThemeSwitch";
 import type { Theme } from "../lib/theme";
@@ -19,7 +19,6 @@ type Props = {
   setTheme: (t: Theme) => void;
   onNavigate?: () => void;
   collapsed?: boolean;
-  onToggleCollapsed?: () => void;
   inDrawer?: boolean;
 };
 
@@ -49,10 +48,8 @@ export default function SidebarContent({
   setTheme,
   onNavigate,
   collapsed = false,
-  onToggleCollapsed,
   inDrawer = false,
 }: Props) {
-  const showCollapseButton = !inDrawer && typeof onToggleCollapsed === "function";
   const reduce = useReducedMotion();
   const [hoveredKey, setHoveredKey] = React.useState<PageKey | null>(null);
 
@@ -62,25 +59,23 @@ export default function SidebarContent({
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <header className="flex items-start justify-between gap-3">
-        <div className="leading-tight">
-          <div className="text-sm font-semibold">{collapsed ? "DS" : "Daniel Starks"}</div>
-          {!collapsed && <div className="text-xs opacity-70">Portfolio</div>}
+        <div className="flex items-center justify-center">
+          {collapsed ? (
+            <motion.img
+              src="/favicon.svg"
+              alt="Daniel Starks logo"
+              className="h-7 w-7 shrink-0"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            />
+          ) : (
+            <div className="leading-tight">
+              <div className="text-sm font-semibold">Daniel Starks</div>
+              <div className="text-xs opacity-70">Portfolio</div>
+            </div>
+          )}
         </div>
-
-        {showCollapseButton && (
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            className="inline-flex items-center justify-center rounded-md border border-border p-2 hover:bg-muted"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={18} aria-hidden="true" />
-            ) : (
-              <PanelLeftClose size={18} aria-hidden="true" />
-            )}
-          </button>
-        )}
       </header>
 
       <nav aria-label="Primary" className="flex-1">
@@ -158,15 +153,15 @@ export default function SidebarContent({
                       animate={
                         reduce
                           ? { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", x: 0 }
-                          : collapsed
-                          ? { opacity: 0, clipPath: "inset(0% 100% 0% 0%)", x: -4 }
+                          : inDrawer
+                          ? { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", x: 0 }
                           : { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", x: 0 }
                       }
                       transition={
                         reduce
                           ? { duration: 0 }
-                          : collapsed
-                          ? { duration: 0.08, ease: "easeOut" }
+                          : inDrawer
+                          ? { duration: 0.12, ease: "easeOut" }
                           : { delay: LABEL_DELAY, duration: 0.18, ease: "easeOut" }
                       }
                     >
