@@ -5,13 +5,13 @@ import HomeBlurb from "../components/home/HomeBlurb";
 export default function Home() {
   return (
     <section className="p-6 sm:p-10">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-4xl">
         <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-start">
-          <img
+          {/* <img
             src={profileImage}
             alt="Daniel Starks"
             className="h-28 w-28 rounded-full object-cover border border-border"
-          />
+          /> */}
 
           <div>
             <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">
