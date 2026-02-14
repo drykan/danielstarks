@@ -60,7 +60,7 @@ export default function Experience() {
     <section className="p-6 sm:p-10">
       <div className="mx-auto max-w-4xl">
         {/* Sticky Header */}
-        <div className="sticky z-30 -mx-6 sm:-mx-10 px-6 sm:px-10 py-4 border-b border-border bg-cream/95 backdrop-blur supports-[backdrop-filter]:bg-cream/80 top-14 sm:top-0">
+        <div className="sticky z-30 px-0 py-4 border-b border-border bg-cream/95 backdrop-blur supports-[backdrop-filter]:bg-cream/80 top-14 sm:top-0">
           <div className="mx-auto max-w-4xl flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Experience</h1>
