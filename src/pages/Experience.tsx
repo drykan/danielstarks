@@ -11,7 +11,9 @@ export default function Experience() {
   const [activeId, setActiveId] = React.useState<string>(experienceData[0]?.id ?? "");
   const [selected, setSelected] = React.useState<string>(experienceData[0]?.id ?? "");
 
-  // When we programmatically scroll (dropdown/dot click), prevent in-view updates from fighting it.
+  console.log("Active Selection => ", selected)
+
+  // programmatically scroll (dropdown/dot click), prevent in-view updates from fighting it.
   const ignoreInViewUntilRef = React.useRef<number>(0);
 
   const register = React.useCallback((id: string, el: HTMLDivElement | null) => {
@@ -51,11 +53,7 @@ export default function Experience() {
   };
 
   const onItemInView = React.useCallback((id: string) => {
-    // If we're in a programmatic scroll window, ignore observer updates
     if (Date.now() < ignoreInViewUntilRef.current) return;
-
-    setActiveId(id);
-    setSelected(id);
   }, []);
 
   return (
