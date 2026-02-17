@@ -22,82 +22,257 @@ function Carousel({ images, title }: { images: string[]; title: string }) {
   const [index, setIndex] = React.useState(0);
   const [status, setStatus] = React.useState<"loading" | "loaded" | "error">("loading");
 
+  // zoom / pan
+  const [zoomed, setZoomed] = React.useState(false);
+  const [scale, setScale] = React.useState(2);
+  const [panKey, setPanKey] = React.useState(0); // remount to reset drag position
+
   const total = images.length;
   const src = images[index];
 
   const prev = () => setIndex((i) => (i - 1 + total) % total);
   const next = () => setIndex((i) => (i + 1) % total);
 
+  // Measure viewport for numeric drag constraints
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
+  const [vp, setVp] = React.useState({ w: 0, h: 0 });
+
+  React.useLayoutEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver(() => {
+      const r = el.getBoundingClientRect();
+      setVp({ w: r.width, h: r.height });
+    });
+
+    ro.observe(el);
+
+    // initialize immediately
+    const r = el.getBoundingClientRect();
+    setVp({ w: r.width, h: r.height });
+
+    return () => ro.disconnect();
+  }, []);
+
   React.useEffect(() => {
     setIndex(0);
   }, [total]);
 
-  // Whenever the slide changes, show loader again until the new image loads
+  // loader on slide change
   React.useEffect(() => {
     setStatus("loading");
+    setZoomed(false);
+    setScale(2);
+    setPanKey((k) => k + 1);
   }, [src]);
 
+  // Esc to exit zoom
+  React.useEffect(() => {
+    if (!zoomed) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setZoomed(false);
+        setScale(2);
+        setPanKey((k) => k + 1);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [zoomed]);
+
+  const canZoom = status === "loaded";
+
+  const toggleZoom = () => {
+    if (!canZoom) return;
+    setZoomed((z) => !z);
+    setScale((s) => (zoomed ? 2 : s)); // when exiting, reset scale
+    setPanKey((k) => k + 1);
+  };
+
+  const zoomIn = () => {
+    if (!canZoom) return;
+    setZoomed(true);
+    setScale((s) => Math.min(4, Number((s + 0.5).toFixed(2))));
+  };
+
+  const zoomOut = () => {
+    if (!canZoom) return;
+    setScale((s) => {
+      const nextScale = Math.max(1, Number((s - 0.5).toFixed(2)));
+      if (nextScale <= 1) {
+        setZoomed(false);
+        // optional: reset to default for next zoom session
+        return 2;
+      }
+      return nextScale;
+    });
+  };
+
+  // Numeric constraints based on scale + viewport
+  const rangeX = zoomed ? Math.max(0, ((scale - 1) * vp.w) / 2) : 0;
+  const rangeY = zoomed ? Math.max(0, ((scale - 1) * vp.h) / 2) : 0;
+
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-cream">
-  <div className="relative w-full h-[clamp(14rem,40vh,26rem)]">
-    {/* Image (always present; no opacity toggling = no flash) */}
-    <img
-      key={src}
-      src={src}
-      alt={`${title} — image ${index + 1} of ${total}`}
-      className="h-full w-full object-contain"
-      loading="lazy"
-      onLoad={() => setStatus("loaded")}
-      onError={() => setStatus("error")}
-    />
-
-    {/* Skeleton overlay fades out after image loads */}
-    <AnimatePresence initial={false}>
-      {status !== "loaded" && (
-        <motion.div
-          key="skeleton"
-          className="absolute inset-0 bg-muted"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
-          aria-hidden="true"
+    <div className="mt-4">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-cream">
+        <div
+          ref={viewportRef}
+          className="relative w-full h-[clamp(14rem,40vh,26rem)] overflow-hidden"
         >
-          <div className="h-full w-full animate-pulse bg-muted" />
+          {/* Image (drag the transform reliably with numeric constraints) */}
+          <motion.img
+            key={`${src}-${panKey}`}
+            src={src}
+            alt={`${title} — image ${index + 1} of ${total}`}
+            className={[
+              "absolute inset-0 h-full w-full",
+              "object-contain",
+              zoomed ? "cursor-grab active:cursor-grabbing" : "cursor-zoom-in",
+            ].join(" ")}
+            onLoad={() => setStatus("loaded")}
+            onError={() => setStatus("error")}
+            onDoubleClick={toggleZoom}
+            style={{ touchAction: zoomed ? "none" : "auto" }}
+            animate={{ scale: zoomed ? scale : 1 }}
+            transition={
+              reduce ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 28 }
+            }
+            drag={zoomed}
+            dragMomentum={false}
+            dragElastic={0}
+            dragConstraints={{
+              left: -rangeX,
+              right: rangeX,
+              top: -rangeY,
+              bottom: rangeY,
+            }}
+          />
 
-          <div className="absolute bottom-3 right-3 rounded-md border border-border bg-cream/90 px-2 py-1 text-xs font-semibold backdrop-blur">
-            {status === "error" ? "Failed to load" : "Loading…"}
+          {/* Skeleton overlay fades out after load */}
+          <AnimatePresence initial={false}>
+            {status !== "loaded" && (
+              <motion.div
+                key="skeleton"
+                className="pointer-events-none absolute inset-0 bg-muted"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                aria-hidden="true"
+              >
+                <div className="h-full w-full animate-pulse bg-muted" />
+
+                <div className="absolute bottom-3 right-3 rounded-md border border-border bg-cream/90 px-2 py-1 text-xs font-semibold backdrop-blur">
+                  {status === "error" ? "Failed to load" : "Loading…"}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Zoom controls (only when loaded) */}
+          {status === "loaded" && (
+            <div className="absolute right-2 top-2 flex items-center gap-2">
+              {!zoomed ? (
+                <button
+                  type="button"
+                  onClick={toggleZoom}
+                  className="rounded-md border border-border bg-cream/90 px-3 py-1 text-xs font-semibold backdrop-blur hover:bg-muted"
+                  aria-label="Zoom image"
+                  title="Zoom (double-click image also works)"
+                >
+                  Zoom
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={zoomOut}
+                    className="rounded-md border border-border bg-cream/90 px-3 py-1 text-xs font-semibold backdrop-blur hover:bg-muted"
+                    aria-label="Zoom out"
+                    title="Zoom out"
+                  >
+                    −
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={zoomIn}
+                    className="rounded-md border border-border bg-cream/90 px-3 py-1 text-xs font-semibold backdrop-blur hover:bg-muted"
+                    aria-label="Zoom in"
+                    title="Zoom in"
+                  >
+                    +
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleZoom}
+                    className="rounded-md border border-border bg-cream/90 px-3 py-1 text-xs font-semibold backdrop-blur hover:bg-muted"
+                    aria-label="Exit zoom"
+                    title="Exit zoom (Esc)"
+                  >
+                    Exit
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Carousel arrows */}
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-md border border-border bg-cream/90 p-2 backdrop-blur hover:bg-muted"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-border bg-cream/90 p-2 backdrop-blur hover:bg-muted"
+              aria-label="Next image"
+            >
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Dots */}
+      {total > 1 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {images.map((_, i) => {
+            const active = i === index;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setIndex(i)}
+                className={[
+                  "h-2.5 w-2.5 rounded-full border",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-cream",
+                  active ? "bg-accent border-accent" : "bg-cream border-border hover:bg-muted",
+                ].join(" ")}
+                aria-label={`Go to image ${i + 1}`}
+                aria-current={active ? "true" : undefined}
+              />
+            );
+          })}
+          <div className="ml-2 text-xs opacity-70">
+            {index + 1} / {total}
           </div>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
-  </div>
-
-  {total > 1 && (
-    <>
-      <button
-        type="button"
-        onClick={prev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-md border border-border bg-cream/90 p-2 backdrop-blur hover:bg-muted"
-        aria-label="Previous image"
-      >
-        <ChevronLeft size={18} aria-hidden="true" />
-      </button>
-
-      <button
-        type="button"
-        onClick={next}
-        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-border bg-cream/90 p-2 backdrop-blur hover:bg-muted"
-        aria-label="Next image"
-      >
-        <ChevronRight size={18} aria-hidden="true" />
-      </button>
-    </>
-  )}
-</div>
-
+    </div>
   );
 }
+
 
 
 export default function WorkCard({ item, expanded, onToggle }: Props) {
