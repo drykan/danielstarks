@@ -17,7 +17,7 @@ export const experienceData: ExperienceItem[] = [
     dates: "2026 – present",
     yearStart: 2026,
     summary:
-      "Sr. React Developer and UI Designer currently designing and establishing the frameworks and architecture for the frontend of a large web application in its infancy stages.",
+      "Senior React Developer and UI Designer architecting the frontend of a large-scale web application, establishing the framework, component structure, and UI design system during the early stages of development.",
   },
   {
     id: "finch-ai-2023",
