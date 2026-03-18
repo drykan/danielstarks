@@ -5,17 +5,20 @@ import type { Theme } from "../lib/theme";
 type Props = {
   theme: Theme;
   setTheme: (t: Theme) => void;
+  collapsed?: boolean;
 };
 
-export default function ThemeSwitch({ theme, setTheme }: Props) {
+export default function ThemeSwitch({ theme, setTheme, collapsed = false }: Props) {
   const checked = theme === "dark";
 
   return (
     <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-sm opacity-90">
-        {checked ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
-        <span className="font-medium">{checked ? "Dark" : "Light"}</span>
-      </div>
+      {!collapsed && (
+        <div className="flex items-center gap-2 text-sm opacity-90">
+          {checked ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
+          <span className="font-medium">{checked ? "Dark" : "Light"}</span>
+        </div> 
+      )}
 
       <Switch.Root
         checked={checked}

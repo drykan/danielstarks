@@ -102,7 +102,6 @@ function Carousel({ images, title }: { images: string[]; title: string }) {
       const nextScale = Math.max(1, Number((s - 0.5).toFixed(2)));
       if (nextScale <= 1) {
         setZoomed(false);
-        // optional: reset to default for next zoom session
         return 2;
       }
       return nextScale;

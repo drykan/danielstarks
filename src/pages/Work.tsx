@@ -1,6 +1,8 @@
+// src/pages/Work.tsx
 import * as React from "react";
 import WorkCard from "../components/work/WorkCard";
 import { workData } from "../data/workData";
+import PageHeader from "../components/PageHeader";
 
 function uniqSorted(list: string[]) {
   return Array.from(new Set(list)).sort((a, b) => a.localeCompare(b));
@@ -35,64 +37,59 @@ export default function Work() {
 
   const clearTags = () => setActiveTags([]);
 
+  const Filters = (
+    <div className="flex flex-wrap items-center gap-2">
+      {allTags.map((tag) => {
+        const pressed = activeTags.includes(tag);
+        return (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => toggleTag(tag)}
+            className={[
+              "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-cream",
+              pressed ? "border-accent bg-accent/15" : "border-border hover:bg-muted",
+            ].join(" ")}
+            aria-pressed={pressed}
+          >
+            {tag}
+          </button>
+        );
+      })}
+
+      {activeTags.length > 0 && (
+        <button
+          type="button"
+          onClick={clearTags}
+          className="ml-1 rounded-full border border-border px-3 py-1 text-xs font-semibold hover:bg-muted"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <section className="p-6 sm:p-10">
       <div className="mx-auto max-w-4xl">
-        {/* Sticky Header */}
-        <div className="sticky z-30 px-0 py-4 border-b border-border bg-cream/95 backdrop-blur supports-[backdrop-filter]:bg-cream/80 top-14 sm:top-0">
-          <div className="mx-auto max-w-4xl">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Work</h1>
-                <p className="mt-2 max-w-2xl opacity-85">
-                  Selected projects across design, web, and visual work. Click a card to expand.
-                </p>
-              </div>
-
-              <div className="text-sm opacity-80">
-                Showing <span className="font-semibold">{filtered.length}</span> /{" "}
-                <span className="font-semibold">{workData.length}</span>
-              </div>
+        <PageHeader
+          title="Work"
+          description="Selected projects across design, web, and visual work. Click a card to expand."
+          right={
+            <div className="text-sm opacity-80">
+              Showing <span className="font-semibold">{filtered.length}</span> /{" "}
+              <span className="font-semibold">{workData.length}</span>
             </div>
+          }
+          mobileCollapsibleLabel="Filters"
+          mobileCollapsible={Filters}
+        >
+          {Filters}
+        </PageHeader>
 
-            {/* Filters */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {allTags.map((tag) => {
-                const pressed = activeTags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={[
-                      "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-cream",
-                      pressed
-                        ? "border-accent bg-accent/15"
-                        : "border-border hover:bg-muted",
-                    ].join(" ")}
-                    aria-pressed={pressed}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
-
-              {activeTags.length > 0 && (
-                <button
-                  type="button"
-                  onClick={clearTags}
-                  className="ml-1 rounded-full border border-border px-3 py-1 text-xs font-semibold hover:bg-muted"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Content padding so cards never sit under sticky header */}
-        <div className="pt-6">
+        {/* Content */}
+        <div>
           {filtered.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-border bg-cream p-6">
               <h2 className="text-lg font-semibold tracking-tight">No matches</h2>

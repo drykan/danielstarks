@@ -179,7 +179,11 @@ export default function SidebarContent({
       </nav>
 
       <div className="mt-auto pt-2">
-        <ThemeSwitch theme={theme} setTheme={setTheme} />
+        <ThemeSwitch 
+          theme={theme} 
+          setTheme={setTheme} 
+          collapsed={collapsed} 
+        />
       </div>
     </div>
   );

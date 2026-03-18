@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Mail, Linkedin, ArrowUpRight } from "lucide-react";
+import PageHeader from "../components/PageHeader";
 
 export default function Contact() {
   // TODO: replace these with your real links
@@ -9,14 +10,10 @@ export default function Contact() {
   return (
     <section className="p-6 sm:p-10">
       <div className="mx-auto max-w-4xl">
-        <header>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Contact</h1>
-          <p className="mt-2 max-w-2xl leading-relaxed opacity-85">
-            I’m always open to conversations around front-end engineering, design systems, and UI
-            architecture. If you’re building something thoughtful and scalable, I’d love to hear
-            about it.
-          </p>
-        </header>
+        <PageHeader
+          title="Contact"
+          description="I’m always open to conversations around front-end engineering, design systems, and UI architecture. If you’re building something thoughtful and scalable, I’d love to hear about it."
+        />
 
         <div className="mt-10 rounded-2xl border border-border bg-cream p-6 sm:p-8">
           <div className="grid gap-3 sm:grid-cols-2">
